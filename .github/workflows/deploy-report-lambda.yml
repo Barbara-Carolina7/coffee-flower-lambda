@@ -34,7 +34,7 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
 
       - name: Instalar dependencias
@@ -60,15 +60,25 @@ jobs:
 
       - name: Preparar paquete de producción
         run: |
-          npm prune --omit=dev
-          zip -r report-function.zip \
-            src/report.handler.js \
-            src/report.service.js \
-            src/product.repository.js \
-            src/notifier.js \
-            package.json \
-            package-lock.json \
-            node_modules
+          rm -rf report-package report-function.zip
+          mkdir -p report-package
+
+          cp src/report.handler.js report-package/index.js
+          cp src/report.service.js report-package/
+          cp src/product.repository.js report-package/
+          cp src/notifier.js report-package/
+          cp package.json report-package/
+          cp package-lock.json report-package/
+
+          cd report-package
+          npm ci --omit=dev
+          zip -r ../report-function.zip .
+
+      - name: Verificar contenido del ZIP
+        run: |
+          unzip -l report-function.zip
+          test -f report-package/index.js
+          test -d report-package/node_modules
 
       - name: Actualizar código de Lambda de informes
         run: |
@@ -85,5 +95,5 @@ jobs:
         run: |
           aws lambda get-function-configuration \
             --function-name "${{ secrets.LAMBDA_REPORT_FUNCTION_NAME }}" \
-            --query '{FunctionName:FunctionName,State:State,LastUpdateStatus:LastUpdateStatus,LastModified:LastModified}' \
+            --query '{FunctionName:FunctionName,Runtime:Runtime,Handler:Handler,State:State,LastUpdateStatus:LastUpdateStatus,LastModified:LastModified}' \
             --output table
