@@ -2,13 +2,14 @@
 {
   "name": "coffee-flower-lambda",
   "version": "1.0.0",
-  "description": "Notificaciones de pedidos de Coffee Flower mediante SQS y SNS",
+  "description": "Notificaciones de pedidos e informes de ventas de Coffee Flower",
   "main": "src/index.js",
   "type": "commonjs",
   "scripts": {
-    "test": "node --check src/index.js"
+    "test": "node --check src/index.js && node --check src/report.handler.js && node --check src/report.service.js && node --check src/product.repository.js && node --check src/notifier.js"
   },
   "dependencies": {
-    "@aws-sdk/client-sns": "^3.800.0"
+    "@aws-sdk/client-sns": "^3.800.0",
+    "pg": "^8.16.3"
   }
 }

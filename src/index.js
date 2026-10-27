@@ -29,7 +29,7 @@ exports.handler = async (event) => {
       continue;
     }
 
-    const subject = `Nuevo pedido Coffee Flower #${pedido.id ?? "sin ID"}`;
+    const subject = `NUEVO pedido Coffee Flower #${pedido.id ?? "sin ID"}`;
 
     const messageText = [
       "Se ha recibido un nuevo pedido en Coffee Flower.",
