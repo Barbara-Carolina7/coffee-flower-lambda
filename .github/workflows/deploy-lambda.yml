@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 concurrency:
   group: deploy-coffee-flower-lambda
@@ -36,11 +35,12 @@ jobs:
       - name: Ejecutar pruebas
         run: npm test
 
-      - name: Configurar credenciales AWS mediante OIDC
+      - name: Configurar credenciales AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Preparar paquete de producción
         run: |
@@ -53,7 +53,7 @@ jobs:
             --function-name "${{ secrets.LAMBDA_FUNCTION_NAME }}" \
             --zip-file fileb://function.zip
 
-      - name: Esperar actualización de Lambda
+      - name: Esperar actualización
         run: |
           aws lambda wait function-updated \
             --function-name "${{ secrets.LAMBDA_FUNCTION_NAME }}"

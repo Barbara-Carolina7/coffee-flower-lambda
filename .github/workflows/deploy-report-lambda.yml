@@ -17,7 +17,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 concurrency:
   group: deploy-coffee-flower-report-lambda
@@ -48,11 +47,12 @@ jobs:
           node --check src/product.repository.js
           node --check src/notifier.js
 
-      - name: Configurar credenciales AWS mediante OIDC
+      - name: Configurar credenciales AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Preparar paquete de producción
         run: |
@@ -66,7 +66,7 @@ jobs:
             package-lock.json \
             node_modules
 
-      - name: Actualizar código de la Lambda de informes
+      - name: Actualizar código de Lambda de informes
         run: |
           aws lambda update-function-code \
             --function-name "${{ secrets.LAMBDA_REPORT_FUNCTION_NAME }}" \
