@@ -1,42 +1,50 @@
 
-const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
-
-const sns = new SNSClient({
-  region: process.env.AWS_REGION || "us-east-1",
-});
-
-const TOPIC_ARN = process.env.REPORT_TOPIC_ARN;
-
 async function sendReport(report) {
-  if (!TOPIC_ARN) {
-    throw new Error("Falta configurar la variable REPORT_TOPIC_ARN");
+  const apiKey = process.env.EMAIL_API_KEY;
+  const recipient = process.env.REPORT_EMAIL_TO;
+
+  if (!apiKey) {
+    throw new Error("Falta configurar EMAIL_API_KEY");
   }
 
-  if (!report || !report.text) {
+  if (!recipient) {
+    throw new Error("Falta configurar REPORT_EMAIL_TO");
+  }
+
+  if (!report?.text) {
     throw new Error("El informe no contiene texto para enviar");
   }
 
-  const subject = `Coffee Flower - Informe de ventas ${report.reportId}`;
+  const subject =
+    `Coffee Flower - Informe de ventas ${report.reportId}`;
 
-  await sns.send(
-    new PublishCommand({
-      TopicArn: TOPIC_ARN,
-      Subject: subject.slice(0, 100),
-      Message: report.text,
-      MessageAttributes: {
-        reportId: {
-          DataType: "String",
-          StringValue: String(report.reportId),
-        },
-        reportType: {
-          DataType: "String",
-          StringValue: String(report.type || "ventas"),
-        },
+  const response = await fetch(
+    "https://app.claudioviajando.com/api/saas/send-email",
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `ApiKey ${apiKey}`,
+        "Content-Type": "application/json",
       },
-    })
+      body: JSON.stringify({
+        to: recipient,
+        subject,
+        text: report.text,
+      }),
+    }
   );
 
-  console.log(`Informe ${report.reportId} publicado en SNS`);
+  if (!response.ok) {
+    const detail = await response.text();
+
+    console.error("Error al enviar correo:", response.status);
+
+    throw new Error(
+      `La API de correo respondió HTTP ${response.status}: ${detail.slice(0, 300)}`
+    );
+  }
+
+  console.log(`Informe ${report.reportId} enviado a la API de correo`);
 
   return {
     success: true,
@@ -44,6 +52,4 @@ async function sendReport(report) {
   };
 }
 
-module.exports = {
-  sendReport,
-};
+module.exports = { sendReport };
